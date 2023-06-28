@@ -293,57 +293,8 @@ data LogAxisParams a = LogAxisParams {
 logTicks :: Range -> ([Rational],[Rational],[Rational])
 logTicks (low,high) = (major,minor,major)
  where
-  pf :: RealFrac a => a -> (Integer, a)
-  pf = properFraction
-
-  -- frac :: (RealFrac a, Integral b) => a -> (b, a)
-  frac :: (RealFrac a) => a -> (Integer, a)
-  frac x | 0 <= b    = (a,b)
-         | otherwise = (a-1,b+1)
-    where
-      (a,b) = properFraction x
-
-  ratio      = high/low
-  lower a l  = let (i,r) = frac (log10 a) in
-               maximum (1:filter (\x -> log10 (fromRational x) <= r) l)*10^^i
-  upper a l  = let (i,r) = pf (log10 a) in
-               minimum (10:filter (\x -> r <= log10 (fromRational x)) l)*10^^i
-
-  powers           :: (Double,Double) -> [Rational] -> [Rational]
-  powers (x,y) l    = [ a*10^^p | p <- [(floor (log10 x))..(ceiling (log10 y))] :: [Integer]
-                                , a <- l ]
-  midselection r l  = filter (inRange r l) (powers r l)
-  inRange (a,b) l x = (lower a l <= x) && (x <= upper b l)
-
-  logRange = (log10 low, log10 high)
-
-  roundPow x = 10^^(round x :: Integer)
-
-  major | 17.5 < log10 ratio = map roundPow $
-                               steps (min 5 (log10 ratio)) logRange
-        | 12 < log10 ratio   = map roundPow $
-                               steps (log10 ratio / 5) logRange
-        | 6 < log10 ratio    = map roundPow $
-                               steps (log10 ratio / 2) logRange
-        | 3 < log10 ratio    = midselection (low,high) [1,10]
-        | 20 < ratio         = midselection (low,high) [1,5,10]
-        | 6 < ratio          = midselection (low,high) [1,2,4,6,8,10]
-        | 3 < ratio          = midselection (low,high) [1..10]
-        | otherwise          = steps 5 (low,high)
-
-  (l',h')   = (minimum major, maximum major)
-  (dl',dh') = (fromRational l', fromRational h')
-  ratio' :: Double
-  ratio' = fromRational (h'/l')
-  filterX = filter (\x -> l'<=x && x <=h') . powers (dl',dh')
-
-  minor | 50 < log10 ratio' = map roundPow $
-                              steps 50 (log10 dl', log10 dh')
-        | 6 < log10 ratio'  = filterX [1,10]
-        | 3 < log10 ratio'  = filterX [1,5,10]
-        | 6 < ratio'        = filterX [1..10]
-        | 3 < ratio'        = filterX [1,1.2..10]
-        | otherwise         = steps 50 (dl', dh')
+  major = steps 5 (low,high)
+  minor = steps 50 (low,high)
 
 
 log10 :: (Floating a) => a -> a
