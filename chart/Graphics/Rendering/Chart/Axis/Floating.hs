@@ -286,15 +286,18 @@ data LogAxisParams a = LogAxisParams {
 {-
  Rules: Do not subdivide between powers of 10 until all powers of 10
           get a major ticks.
-        Do not subdivide between powers of ten as [1,2,4,6,8,10] when
-          5 gets a major ticks
-          (ie the major ticks need to be a subset of the minor tick)
 -}
-logTicks :: Range -> ([Rational],[Rational],[Rational])
-logTicks (low,high) = (major,minor,major)
+logTicks :: (Double, Double) -> ([Rational],[Rational],[Rational])
+logTicks (low,high) = (toRational <$> major,toRational <$> minor,toRational <$> major)
  where
-  major = steps 5 (low,high)
-  minor = steps 50 (low,high)
+  major = insertMiddles low high 4
+  minor = concat $ zipWith (\l h -> insertMiddles l h 4) major (Prelude.tail major)
+
+  insertMiddles :: Double -> Double -> Int -> [Double]
+  insertMiddles l h numSep
+    = l: fmap (\x -> l + 10 ** log10 (l + fromIntegral x))  [1,2..(numSep - 1)] ++ [h]
+    where
+      sep = (log10 h - log10 l) / fromIntegral numSep
 
 
 log10 :: (Floating a) => a -> a
