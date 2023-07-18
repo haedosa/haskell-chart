@@ -23,15 +23,13 @@ module Graphics.Rendering.Chart.Axis.Floating(
     scaledLogAxis,
     autoScaledLogAxis,
     autoSteps,
-
     la_labelf,
     la_nLabels,
     la_nTicks,
-
     loga_labelf
 ) where
 
-import Data.List(minimumBy)
+import Data.List(minimumBy, nub)
 import Data.Ord (comparing)
 import Data.Default.Class
 import Numeric (showEFloat, showFFloat)
@@ -291,11 +289,11 @@ logTicks :: (Double, Double) -> ([Rational],[Rational],[Rational])
 logTicks (low,high) = (toRational <$> major,toRational <$> minor,toRational <$> major)
  where
   major = insertMiddles low high 4
-  minor = concat $ zipWith (\l h -> insertMiddles l h 4) major (Prelude.tail major)
+  minor = nub $ concat $ zipWith (\l h -> insertMiddles l h 4) major (Prelude.tail major)
 
   insertMiddles :: Double -> Double -> Int -> [Double]
   insertMiddles l h numSep
-    = l: fmap (\x -> l + 10 ** log10 (l + fromIntegral x))  [1,2..(numSep - 1)] ++ [h]
+    = l: fmap (\x -> l + 10 ** (log10 l + sep * fromIntegral x))  [1,2..(numSep - 1)] ++ [h]
     where
       sep = (log10 h - log10 l) / fromIntegral numSep
 
